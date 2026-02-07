@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     let filePath = safeJoin(VIDEO_DIR, file);
 
     if (!fs.existsSync(filePath)) {
+      console.log("File path not found:", filePath);
       console.log(
         `Arquivo não encontrado: ${file} (IP: ${
           request.headers.get("x-forwarded-for") ||
@@ -53,10 +54,12 @@ export async function GET(request: NextRequest) {
     }
 
     let stat = fs.statSync(filePath);
+    console.log("Initial stat isDirectory:", stat.isDirectory());
 
     if (stat.isDirectory()) {
       const files = fs.readdirSync(filePath);
       const mp4File = files.find((f) => f.toLowerCase().endsWith(".mp4"));
+      console.log("Found mp4 file in dir:", mp4File);
 
       if (!mp4File) {
         return new NextResponse("Nenhum arquivo MP4 encontrado na pasta", {
@@ -69,8 +72,10 @@ export async function GET(request: NextRequest) {
     }
 
     const mimeType = mime.lookup(filePath) || "application/octet-stream";
+    console.log("Resolved MimeType:", mimeType, "FilePath:", filePath);
 
     if (!mimeType.includes("mp4") && !filePath.toLowerCase().endsWith(".mp4")) {
+      console.log("Invalid mime type or extension");
       return new NextResponse("Tipo de arquivo não permitido", { status: 403 });
     }
 

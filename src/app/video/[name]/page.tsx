@@ -30,7 +30,7 @@ export default function VideoPlayer() {
   const [isMobile, setIsMobile] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const videoName = params.name as string;
+  const videoName = decodeURIComponent(params.name as string);
   const videoUrl = `/api/stream?file=${encodeURIComponent(videoName)}`;
 
   useEffect(() => {
@@ -80,7 +80,6 @@ export default function VideoPlayer() {
     video.addEventListener("pause", handlePause);
     video.addEventListener("volumechange", handleVolumeChange);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-
 
     video.play().catch(() => {
       setLoading(false);
@@ -161,7 +160,7 @@ export default function VideoPlayer() {
     if (!video) return;
     video.currentTime = Math.max(
       0,
-      Math.min(duration, video.currentTime + seconds)
+      Math.min(duration, video.currentTime + seconds),
     );
   };
 
@@ -184,7 +183,7 @@ export default function VideoPlayer() {
   };
 
   const handleProgressClick = (
-    e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+    e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
   ) => {
     const video = videoRef.current;
     if (!video || duration === 0) return;
@@ -427,7 +426,7 @@ export default function VideoPlayer() {
   }, []);
 
   return (
-    <div style={styles.container} >
+    <div style={styles.container}>
       <div style={styles.header}>
         <h2 style={styles.title}>{videoName}</h2>
         <Button onClick={handleBack} style={styles.backButton}>
