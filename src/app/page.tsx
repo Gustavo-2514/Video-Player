@@ -9,7 +9,8 @@ import Link from "next/link";
 
 interface Video {
   name: string;
-  url: string;
+  poster: string;
+  url?: string;
 }
 
 export default function Home() {
@@ -126,7 +127,7 @@ export default function Home() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Vídeos Disponíveis</h1>
+      <h1 style={styles.title}>Filmes Disponíveis</h1>
 
       {loading && <p style={styles.message}>Carregando...</p>}
 
@@ -137,37 +138,32 @@ export default function Home() {
       )}
 
       {!loading && !error && videos.length > 0 && (
-        <ul style={styles.videoList}>
+        <div style={styles.grid}>
           {videos.map((video) => (
-            <li key={video.name} style={styles.videoItem}>
-              <Card style={{ padding: 0 }}>
-                <Button
-                  onClick={() => handleVideoClick(video.name)}
-                  style={{
-                    width: "100%",
-                    justifyContent: "flex-start",
-                    background: "transparent",
-                    color: "#111",
-                    padding: "0.75rem 1rem",
-                    borderRadius: 0,
-                  }}
-                >
-                  <Play size={18} />
-                  <span
-                    style={{
-                      marginLeft: 12,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {video.name}
-                  </span>
-                </Button>
+            <div
+              key={video.name}
+              onClick={() => handleVideoClick(video.name)}
+              style={styles.cardWrapper}
+            >
+              <Card style={styles.card}>
+                <div style={styles.posterContainer}>
+                  <img
+                    src={video.poster}
+                    alt={video.name}
+                    style={styles.posterImage}
+                    loading="lazy"
+                  />
+                  <div style={styles.playOverlay}>
+                    <Play size={48} color="white" />
+                  </div>
+                </div>
+                <div style={styles.cardContent}>
+                  <h3 style={styles.cardTitle}>{video.name}</h3>
+                </div>
               </Card>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
@@ -175,59 +171,107 @@ export default function Home() {
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    maxWidth: "800px",
+    maxWidth: "1200px",
     margin: "0 auto",
     padding: "2rem",
     fontFamily: "system-ui, -apple-system, sans-serif",
+    backgroundColor: "#121212",
+    minHeight: "100vh",
+    color: "#e0e0e0",
   },
   title: {
-    fontSize: "2rem",
+    fontSize: "2.5rem",
     marginBottom: "2rem",
     textAlign: "center",
-    color: "#333",
+    color: "#fff",
+    fontWeight: "bold",
   },
   subtitle: {
     fontSize: "1rem",
     marginBottom: "1rem",
     textAlign: "center",
-    color: "#666",
+    color: "#aaa",
   },
   message: {
     textAlign: "center",
-    color: "#666",
+    color: "#aaa",
     marginTop: "2rem",
+    fontSize: "1.2rem",
   },
   error: {
     textAlign: "center",
-    color: "#d32f2f",
+    color: "#ff5252",
     marginTop: "1rem",
   },
-  videoList: {
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+    gap: "2rem",
+    padding: "1rem 0",
   },
-  videoItem: {
-    marginBottom: "0.5rem",
-  },
-  videoButton: {
-    width: "100%",
-    padding: "1rem",
-    fontSize: "1rem",
-    textAlign: "left",
-    backgroundColor: "#f5f5f5",
-    border: "1px solid #ddd",
-    borderRadius: "4px",
+  cardWrapper: {
     cursor: "pointer",
-    transition: "background-color 0.2s",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+  },
+  card: {
+    padding: 0,
+    background: "#1e1e1e",
+    border: "none",
+    overflow: "hidden",
+    borderRadius: "12px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+  },
+  posterContainer: {
+    position: "relative",
+    width: "100%",
+    aspectRatio: "2/3",
+    backgroundColor: "#000",
+  },
+  posterImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+  playOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: "rgba(0, 0, 0, 0.4)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0,
+    transition: "opacity 0.2s ease",
+  },
+  cardContent: {
+    padding: "1rem",
+    flexGrow: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardTitle: {
+    fontSize: "1.1rem",
+    margin: 0,
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: 500,
+    lineHeight: 1.4,
   },
   authBox: {
     maxWidth: "400px",
     margin: "0 auto",
     padding: "2rem",
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: "#1e1e1e",
+    borderRadius: "12px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+    border: "1px solid #333",
   },
   form: {
     display: "flex",
@@ -239,18 +283,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "1.5rem",
     textAlign: "center",
     letterSpacing: "0.5rem",
-    border: "2px solid #ddd",
-    borderRadius: "4px",
+    backgroundColor: "#2c2c2c",
+    border: "2px solid #333",
+    color: "#fff",
+    borderRadius: "8px",
     outline: "none",
   },
   submitButton: {
     padding: "0.75rem",
     fontSize: "1rem",
-    backgroundColor: "#1976d2",
+    backgroundColor: "#2196f3",
     color: "white",
     border: "none",
-    borderRadius: "4px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "bold",
+    transition: "background-color 0.2s",
   },
 };

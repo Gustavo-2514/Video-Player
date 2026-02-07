@@ -7,10 +7,17 @@ import mime from "mime-types";
 const VIDEO_DIR = process.env.VIDEO_DIR || "/tmp/videos";
 
 function safeJoin(videoDir: string, fileName: string): string {
-  const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, "");
-  if (sanitized !== fileName) {
+  console.log({ fileName });
+
+  if (
+    fileName.includes("/") ||
+    fileName.includes("\\") ||
+    fileName.includes("..")
+  ) {
     throw new Error("Nome de arquivo inválido");
   }
+
+  const sanitized = fileName;
 
   const full = path.join(videoDir, sanitized);
   const normalized = path.normalize(full);
@@ -32,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const filePath = safeJoin(VIDEO_DIR, file);
+    let filePath = safeJoin(VIDEO_DIR, file);
 
     if (!fs.existsSync(filePath)) {
       console.log(
@@ -40,12 +47,27 @@ export async function GET(request: NextRequest) {
           request.headers.get("x-forwarded-for") ||
           request.headers.get("x-real-ip") ||
           "unknown"
-        })`
+        })`,
       );
       return new NextResponse("Arquivo não encontrado", { status: 404 });
     }
 
-    const stat = fs.statSync(filePath);
+    let stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      const files = fs.readdirSync(filePath);
+      const mp4File = files.find((f) => f.toLowerCase().endsWith(".mp4"));
+
+      if (!mp4File) {
+        return new NextResponse("Nenhum arquivo MP4 encontrado na pasta", {
+          status: 404,
+        });
+      }
+
+      filePath = path.join(filePath, mp4File);
+      stat = fs.statSync(filePath);
+    }
+
     const mimeType = mime.lookup(filePath) || "application/octet-stream";
 
     if (!mimeType.includes("mp4") && !filePath.toLowerCase().endsWith(".mp4")) {
@@ -76,7 +98,7 @@ export async function GET(request: NextRequest) {
 
       const nodeStream = fs.createReadStream(filePath, { start, end });
       const readableStream = Readable.toWeb(
-        nodeStream as unknown as NodeJS.ReadableStream
+        nodeStream as unknown as NodeJS.ReadableStream,
       );
 
       return new NextResponse(readableStream, {
@@ -92,7 +114,7 @@ export async function GET(request: NextRequest) {
     } else {
       const nodeStream = fs.createReadStream(filePath);
       const readableStream = Readable.toWeb(
-        nodeStream as unknown as NodeJS.ReadableStream
+        nodeStream as unknown as NodeJS.ReadableStream,
       );
 
       return new NextResponse(readableStream, {
